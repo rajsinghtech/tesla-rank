@@ -1,53 +1,40 @@
-# Stage 1: Build frontend assets
-FROM node:18-alpine as node
+# Use the official PHP image with FPM
+FROM php:8.3-fpm
 
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-# Stage 2: Setup PHP
-FROM php:8.2-fpm-alpine
+# Set working directory
+WORKDIR /var/www/html
 
 # Install system dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     git \
     curl \
-    bash \
-    unzip \
     libpng-dev \
-    libjpeg-turbo-dev \
-    libwebp-dev \
-    libxpm-dev \
-    zlib-dev \
-    libzip-dev \
-    oniguruma-dev
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
+    libjpeg-dev \
+    libfreetype6-dev \
+    zip \
+    unzip \
+    nodejs \
+    npm \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www
+# Copy composer files and install PHP dependencies
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Copy application source
+# Copy the rest of the application code
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev
+# Install npm dependencies and build assets
+RUN npm install && npm run production
 
-# Copy built assets from node stage
-COPY --from=node /app/public/build ./public/build
+# Set directory permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-
-# Expose port 9000
+# Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
 # Start PHP-FPM server
