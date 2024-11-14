@@ -28,14 +28,13 @@ RUN curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
 RUN groupadd -g $WWWGROUP sail && \
     useradd -m -g sail sail
 
-# Copy composer files and artisan before running composer install
-COPY --chown=sail:sail composer.json composer.lock artisan ./
+USER sail
+
+# Copy composer files, artisan, and bootstrap directory before running composer install
+COPY --chown=sail:sail composer.json composer.lock artisan bootstrap/ ./
 
 # Ensure artisan has execute permissions
 RUN chmod +x artisan
-
-# Switch to the non-root user
-USER sail
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
