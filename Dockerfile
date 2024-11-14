@@ -1,49 +1,57 @@
-# Use the official PHP image with FPM
-FROM php:8.1-fpm
+# Stage 1: Build frontend assets
+FROM node:18-alpine as node
 
-# Set working directory
-WORKDIR /var/www
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Stage 2: Setup PHP
+FROM php:8.2-fpm-alpine
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    locales \
-    zip \
-    unzip \
+RUN apk add --no-cache \
     git \
     curl \
-    nodejs \
-    npm
+    bash \
+    unzip \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    libxpm-dev \
+    zlib-dev \
+    libzip-dev \
+    oniguruma-dev
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Set working directory
+WORKDIR /var/www
 
-# Install Node.js and npm
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
-    && apt-get install -y nodejs
-
-# Copy existing application directory
-COPY . /var/www
+# Copy Composer files
+COPY composer.json composer.lock ./
 
 # Install PHP dependencies
-RUN composer install --prefer-dist --no-dev --no-autoloader
+RUN composer install --optimize-autoloader --no-dev
 
-# Install Node dependencies and build assets
-RUN npm install
-RUN npm run build
+# Copy application source
+COPY . .
 
-# Optimize Composer autoloader
-RUN composer dump-autoload --optimize
+# Copy built assets from node stage
+COPY --from=node /app/public/build ./public/build
 
-# Expose port 9000 and start PHP-FPM server
+# Set permissions
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
+# Expose port 9000
 EXPOSE 9000
+
+# Start PHP-FPM server
 CMD ["php-fpm"]
