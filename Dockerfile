@@ -1,41 +1,49 @@
-# Use the official PHP image with Apache
-FROM php:8.2-apache
+# Use the official PHP image with FPM
+FROM php:8.1-fpm
 
 # Set working directory
-WORKDIR /var/www/html
+WORKDIR /var/www
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    build-essential \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    locales \
     zip \
     unzip \
     git \
-    curl
+    curl \
+    nodejs \
+    npm
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install pdo pdo_mysql
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy existing application directory contents
-COPY . /var/www/html
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www/html
+# Install Node.js and npm
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+    && apt-get install -y nodejs
 
-# Change the owner of the Laravel directory to www-data
-RUN chown -R www-data:www-data /var/www/html
+# Copy existing application directory
+COPY . /var/www
 
-# Expose port 80
-EXPOSE 80
+# Install PHP dependencies
+RUN composer install --prefer-dist --no-dev --no-autoloader
 
-# Start Apache in the foreground
-CMD ["apache2-foreground"]
+# Install Node dependencies and build assets
+RUN npm install
+RUN npm run build
+
+# Optimize Composer autoloader
+RUN composer dump-autoload --optimize
+
+# Expose port 9000 and start PHP-FPM server
+EXPOSE 9000
+CMD ["php-fpm"]
