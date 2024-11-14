@@ -24,12 +24,20 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
     && apt-get install -y nodejs
 
-# Copy composer files and install PHP dependencies
-COPY composer.json composer.lock ./
+# Add a non-root user and switch to it
+RUN groupadd -g $WWWGROUP sail && \
+    useradd -m -g sail sail
+
+USER sail
+
+# Copy composer files and artisan before running composer install
+COPY --chown=sail:sail composer.json composer.lock artisan ./
+
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Copy application source
-COPY . .
+# Copy the rest of the application code
+COPY --chown=sail:sail . .
 
 # Install npm dependencies and build assets
 RUN npm install && npm run production
