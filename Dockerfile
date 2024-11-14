@@ -1,5 +1,5 @@
 # Laravel Sail's PHP image with Composer
-FROM laravelsail/php81-composer:latest
+FROM laravelsail/php82-composer:latest
 
 # Arguments for build-time configuration
 ARG WWWGROUP
