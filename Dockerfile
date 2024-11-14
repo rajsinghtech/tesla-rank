@@ -1,8 +1,8 @@
-# Laravel Sail's PHP image with Composer
+# Use Laravel Sail's PHP image with Composer
 FROM laravelsail/php82-composer:latest
 
-# Arguments for build-time configuration
-ARG WWWGROUP
+# Arguments for build-time configuration with default values
+ARG WWWGROUP=1000
 ARG NODE_VERSION=20
 
 # Set working directory
@@ -28,10 +28,14 @@ RUN curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
 RUN groupadd -g $WWWGROUP sail && \
     useradd -m -g sail sail
 
-USER sail
-
 # Copy composer files and artisan before running composer install
 COPY --chown=sail:sail composer.json composer.lock artisan ./
+
+# Ensure artisan has execute permissions
+RUN chmod +x artisan
+
+# Switch to the non-root user
+USER sail
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
@@ -42,11 +46,14 @@ COPY --chown=sail:sail . .
 # Install npm dependencies and build assets
 RUN npm install && npm run production
 
-# Set permissions
+# Switch back to root to set permissions
+USER root
+
+# Set permissions for storage and cache directories
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Expose port 9000 for PHP-FPM
 EXPOSE 9000
 
 # Start PHP-FPM server
-CMD ["php-fpm"] 
+CMD ["php-fpm"]
