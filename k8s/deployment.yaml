@@ -51,3 +51,9 @@ spec:
               value: production
             - name: APP_KEY
               value: base64:chFuYbKKde3+rZAa3MJbZL/Phm4dBwjOuQ+k7DeuW38=
+            - name: TWITTER_CLIENT_API_KEY
+              value: 5MhDj4mKCkXhEvp598iD3g8LX
+            - name: TWITTER_CLIENT_API_SECRET_KEY
+              value: tPLcv5NH4qQnljLF6kRx7i1n3G4OmIrZguQN86z2RN0tg2QeIi
+            - name: TWITTER_CALLBACK_URL
+              value: https://teslarank.rajsingh.info/auth/twitter/callback
