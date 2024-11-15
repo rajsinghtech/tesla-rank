@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tesla-rank
+  namespace: tesla
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tesla-rank
+  template:
+    metadata:
+      labels:
+        app: tesla-rank
+    spec:
+      containers:
+        - name: tesla-rank
+          image: quay.io/rajsinghcpre/tesla-rank:581427b3dd0f97009d9785b8d3f123d71de0e864
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app
+                  key: host
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app
+                  key: port
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app
+                  key: user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app
+                  key: password
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-app
+                  key: dbname
+            - name: DB_CONNECTION
+              value: pgsql
+            - name: APP_ENV
+              value: production
+            - name: APP_KEY
+              value: base64:chFuYbKKde3+rZAa3MJbZL/Phm4dBwjOuQ+k7DeuW38=
