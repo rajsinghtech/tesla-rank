@@ -76,8 +76,6 @@ class DashboardController extends Controller
             vin ASC, created_at DESC, data_hash ASC;
         ')->get();
 
-        dd($speeds);
-
         return view('dashboard', compact('locations', 'destinations'));
     }
 }
