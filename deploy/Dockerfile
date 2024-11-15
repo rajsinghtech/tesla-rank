@@ -80,6 +80,6 @@ COPY php.ini "$PHP_INI_DIR/conf.d/app.ini"
 WORKDIR /var/www/html
 
 # add all folders where files are being stored that require persistence. if needed, otherwise remove this line.
-VOLUME ["/var/www/html/storage/app"]
+# VOLUME ["/var/www/html/storage/app"]
 
 CMD ["sh", "-c", "nginx && php-fpm"]
