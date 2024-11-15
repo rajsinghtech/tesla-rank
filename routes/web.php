@@ -5,7 +5,7 @@ use App\Http\Controllers\TwitterController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('index');
 });
 
 Route::middleware([

@@ -61,7 +61,7 @@ class DashboardController extends Controller
             created_at,
             (SELECT data_item->'value'->>'string_value'
             FROM jsonb_array_elements(data->'data') AS data_item
-            WHERE data_item->>'key' = 'VehicleSpeed') AS battery_range
+            WHERE data_item->>'key' = 'VehicleSpeed') AS speed
         ")
             ->whereRaw("
             EXISTS (
@@ -76,6 +76,26 @@ class DashboardController extends Controller
             vin ASC, created_at DESC, data_hash ASC;
         ')->get();
 
-        return view('dashboard', compact('locations', 'destinations'));
+        $directions = DB::table('telemetry_data')->selectRaw("
+            vin,
+            created_at,
+            (SELECT data_item->'value'->>'string_value'
+            FROM jsonb_array_elements(data->'data') AS data_item
+            WHERE data_item->>'key' = 'GpsHeading') as direction
+        ")
+            ->whereRaw("
+            EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements(telemetry_data.data->'data') AS data_item
+                WHERE data_item->>'key' = 'GpsHeading'
+                AND data_item->'value'->>'string_value' IS NOT NULL
+            )
+        ")
+            ->whereDay('created_at', now()->day)
+            ->orderByRaw('
+            vin ASC, created_at DESC, data_hash ASC;
+        ')->get();
+
+        return view('dashboard', compact('locations', 'destinations', 'speeds', 'directions'));
     }
 }
