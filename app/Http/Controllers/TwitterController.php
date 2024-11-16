@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
@@ -40,6 +41,7 @@ class TwitterController extends Controller
                 'name' => $user->name,
                 'twitter_id' => $user->id,
                 'twitter_username' => $user->nickname,
+                'password' => bcrypt(request(Str::random())), // Set a random password
             ]);
             Auth::login($newUser);
         }
