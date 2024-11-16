@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: tesla-rank
-          image: quay.io/rajsinghcpre/tesla-rank:50058dc3a10b29297405966389ceb00172b6dbda
+          image: quay.io/rajsinghcpre/tesla-rank:fddb824a3078c34b8f0a02bb63a0bb74f9cf8577
           ports:
             - containerPort: 80
               name: http
